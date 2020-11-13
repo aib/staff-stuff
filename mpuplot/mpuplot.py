@@ -10,20 +10,20 @@ class MpuPlotter:
 		self.widget = pyqtgraph.GraphicsLayoutWidget(title="MPU Plotter")
 
 		self.tracked = {
-			'ax':   { 'components': 1, 'title': "Accel X",   'color': 'r', 'pos': (3, 0) },
-			'ay':   { 'components': 1, 'title': "Accel Y",   'color': 'g', 'pos': (3, 1) },
-			'az':   { 'components': 1, 'title': "Accel Z",   'color': 'b', 'pos': (3, 2) },
-			'axy':  { 'components': 2, 'title': "Accel XY",  'color': 'y', 'pos': (4, 2) },
-			'axz':  { 'components': 2, 'title': "Accel XZ",  'color': 'm', 'pos': (4, 1) },
-			'ayz':  { 'components': 2, 'title': "Accel YZ",  'color': 'c', 'pos': (4, 0) },
-			'axyz': { 'components': 3, 'title': "Accel XYZ", 'color': 'w', 'pos': (5, 1) },
-			'gx':   { 'components': 1, 'title': "Gyro X",    'color': 'r', 'pos': (0, 0) },
-			'gy':   { 'components': 1, 'title': "Gyro Y",    'color': 'g', 'pos': (0, 1) },
-			'gz':   { 'components': 1, 'title': "Gyro Z",    'color': 'b', 'pos': (0, 2) },
-			'gxy':  { 'components': 2, 'title': "Gyro XY",   'color': 'y', 'pos': (1, 2) },
-			'gxz':  { 'components': 2, 'title': "Gyro XZ",   'color': 'm', 'pos': (1, 1) },
-			'gyz':  { 'components': 2, 'title': "Gyro YZ",   'color': 'c', 'pos': (1, 0) },
-			'gxyz': { 'components': 3, 'title': "Gyro XYZ",  'color': 'w', 'pos': (2, 1) },
+			'ax':   { 'components': 1, 'title': "Accel X--", 'color': 'r', 'pos': (3, 0) },
+			'ay':   { 'components': 1, 'title': "Accel -Y-", 'color': 'g', 'pos': (4, 0) },
+			'az':   { 'components': 1, 'title': "Accel --Z", 'color': 'b', 'pos': (5, 0) },
+			'axy':  { 'components': 2, 'title': "Accel XY-", 'color': 'y', 'pos': (5, 2) },
+			'axz':  { 'components': 2, 'title': "Accel X-Z", 'color': 'm', 'pos': (4, 2) },
+			'ayz':  { 'components': 2, 'title': "Accel -YZ", 'color': 'c', 'pos': (3, 2) },
+			'axyz': { 'components': 3, 'title': "Accel XYZ", 'color': 'w', 'pos': (4, 1) },
+			'gx':   { 'components': 1, 'title': "Gyro X--",  'color': 'r', 'pos': (0, 0) },
+			'gy':   { 'components': 1, 'title': "Gyro -Y-",  'color': 'g', 'pos': (1, 0) },
+			'gz':   { 'components': 1, 'title': "Gyro --Z",  'color': 'b', 'pos': (2, 0) },
+			'gxy':  { 'components': 2, 'title': "Gyro XY-",  'color': 'y', 'pos': (2, 2) },
+			'gxz':  { 'components': 2, 'title': "Gyro X-Z",  'color': 'm', 'pos': (1, 2) },
+			'gyz':  { 'components': 2, 'title': "Gyro -YZ",  'color': 'c', 'pos': (0, 2) },
+			'gxyz': { 'components': 3, 'title': "Gyro XYZ",  'color': 'w', 'pos': (1, 1) },
 		}
 
 		self.plots = {}
