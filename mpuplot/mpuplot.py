@@ -33,10 +33,15 @@ class MpuPlotter:
 			yrange = (-1, +1) if v['components'] == 1 else (0, math.sqrt(v['components']))
 			plot.setRange(xRange=(0, self.plot_length), yRange=yrange)
 			self.plots[k] = plot
-			self.widget.addItem(plot, row=v['pos'][0], col=v['pos'][1])
 
 		self.curves = { k: self.plots[k].plot(pen=v['color']) for k, v in self.tracked.items() }
 		self.plot_data = { k: [0] * self.plot_length for k in self.tracked.keys() }
+
+		# The order plots are added and updated seems to affect performance
+		self.update_order = list(map(lambda k_v: k_v[0], sorted(self.tracked.items(), key=lambda k_v: k_v[1]['pos'])))
+
+		for k in self.update_order:
+			self.widget.addItem(self.plots[k], row=self.tracked[k]['pos'][0], col=self.tracked[k]['pos'][1])
 
 		self._update_data()
 
@@ -68,8 +73,8 @@ class MpuPlotter:
 		self._update_data()
 
 	def _update_data(self):
-		for k, curve in self.curves.items():
-			curve.setData(self.plot_data[k])
+		for k in self.update_order:
+			self.curves[k].setData(self.plot_data[k])
 
 def main():
 	app = pyqtgraph.Qt.QtGui.QApplication(sys.argv)
