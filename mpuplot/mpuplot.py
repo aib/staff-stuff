@@ -45,7 +45,7 @@ class MpuPlotter:
 
 		self._update_data()
 
-		self.widget.show()
+		self.widget.showMaximized()
 
 	def put_data(self, ax, ay, az, gx, gy, gz):
 		keyed = {
