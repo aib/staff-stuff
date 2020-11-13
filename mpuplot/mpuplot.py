@@ -10,20 +10,20 @@ class MpuPlotter:
 		self.widget = pyqtgraph.GraphicsLayoutWidget(title="MPU Plotter")
 
 		self.tracked = {
-			'ax': { 'components': 1, 'title': "Accel X", 'color': 'r' },
-			'ay': { 'components': 1, 'title': "Accel Y", 'color': 'g' },
-			'az': { 'components': 1, 'title': "Accel Z", 'color': 'b' },
-			'axy': { 'components': 2, 'title': "Accel XY", 'color': 'y' },
-			'axz': { 'components': 2, 'title': "Accel XZ", 'color': 'm' },
-			'ayz': { 'components': 2, 'title': "Accel YZ", 'color': 'c' },
-			'axyz': { 'components': 3, 'title': "Accel XYZ", 'color': 'w' },
-			'gx': { 'components': 1, 'title': "Gyro X", 'color': 'r' },
-			'gy': { 'components': 1, 'title': "Gyro Y", 'color': 'g' },
-			'gz': { 'components': 1, 'title': "Gyro Z", 'color': 'b' },
-			'gxy': { 'components': 2, 'title': "Gyro XY", 'color': 'y' },
-			'gxz': { 'components': 2, 'title': "Gyro XZ", 'color': 'm' },
-			'gyz': { 'components': 2, 'title': "Gyro YZ", 'color': 'c' },
-			'gxyz': { 'components': 3, 'title': "Gyro XYZ", 'color': 'w' },
+			'ax':   { 'components': 1, 'title': "Accel X",   'color': 'r', 'pos': (3, 0) },
+			'ay':   { 'components': 1, 'title': "Accel Y",   'color': 'g', 'pos': (3, 1) },
+			'az':   { 'components': 1, 'title': "Accel Z",   'color': 'b', 'pos': (3, 2) },
+			'axy':  { 'components': 2, 'title': "Accel XY",  'color': 'y', 'pos': (4, 2) },
+			'axz':  { 'components': 2, 'title': "Accel XZ",  'color': 'm', 'pos': (4, 1) },
+			'ayz':  { 'components': 2, 'title': "Accel YZ",  'color': 'c', 'pos': (4, 0) },
+			'axyz': { 'components': 3, 'title': "Accel XYZ", 'color': 'w', 'pos': (5, 1) },
+			'gx':   { 'components': 1, 'title': "Gyro X",    'color': 'r', 'pos': (0, 0) },
+			'gy':   { 'components': 1, 'title': "Gyro Y",    'color': 'g', 'pos': (0, 1) },
+			'gz':   { 'components': 1, 'title': "Gyro Z",    'color': 'b', 'pos': (0, 2) },
+			'gxy':  { 'components': 2, 'title': "Gyro XY",   'color': 'y', 'pos': (1, 2) },
+			'gxz':  { 'components': 2, 'title': "Gyro XZ",   'color': 'm', 'pos': (1, 1) },
+			'gyz':  { 'components': 2, 'title': "Gyro YZ",   'color': 'c', 'pos': (1, 0) },
+			'gxyz': { 'components': 3, 'title': "Gyro XYZ",  'color': 'w', 'pos': (2, 1) },
 		}
 
 		self.plots = {}
@@ -33,33 +33,10 @@ class MpuPlotter:
 			yrange = (-1, +1) if v['components'] == 1 else (0, math.sqrt(v['components']))
 			plot.setRange(xRange=(0, self.plot_length), yRange=yrange)
 			self.plots[k] = plot
+			self.widget.addItem(plot, row=v['pos'][0], col=v['pos'][1])
 
 		self.curves = { k: self.plots[k].plot(pen=v['color']) for k, v in self.tracked.items() }
 		self.plot_data = { k: [0] * self.plot_length for k in self.tracked.keys() }
-
-		self.widget.addItem(self.plots['gx'])
-		self.widget.addItem(self.plots['gy'])
-		self.widget.addItem(self.plots['gz'])
-		self.widget.nextRow()
-		self.widget.addItem(self.plots['gyz'])
-		self.widget.addItem(self.plots['gxz'])
-		self.widget.addItem(self.plots['gxy'])
-		self.widget.nextRow()
-		self.widget.addViewBox()
-		self.widget.addItem(self.plots['gxyz'])
-		self.widget.addViewBox()
-		self.widget.nextRow()
-		self.widget.addItem(self.plots['ax'])
-		self.widget.addItem(self.plots['ay'])
-		self.widget.addItem(self.plots['az'])
-		self.widget.nextRow()
-		self.widget.addItem(self.plots['ayz'])
-		self.widget.addItem(self.plots['axz'])
-		self.widget.addItem(self.plots['axy'])
-		self.widget.nextRow()
-		self.widget.addViewBox()
-		self.widget.addItem(self.plots['axyz'])
-		self.widget.addViewBox()
 
 		self._update_data()
 
