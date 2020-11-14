@@ -6,11 +6,16 @@
 #include <esp_err.h>
 #include <esp_event.h>
 #include <esp_log.h>
+#include <esp_netif.h>
 #include <esp_system.h>
 #include <esp_wifi.h>
 
+#include <lwip/sockets.h>
+
 #define WIFI_SSID "ssid"
 #define WIFI_PASSWORD "password"
+#define TARGET_HOST "192.168.1.100"
+#define TARGET_PORT 12345
 
 #define ERROR_PAUSE (1000 / portTICK_RATE_MS)
 
@@ -107,13 +112,29 @@ static esp_err_t mpu_read_task_init()
 static void mpu_read_task(void *arg)
 {
 	esp_err_t ret;
+	int iret;
 	uint8_t sensor_data[14];
+	char payload[1024];
+	size_t payload_length;
+	int sock;
+	struct sockaddr_in sock_dest;
 
 	ret = mpu_read_task_init();
 	if (ret != ESP_OK) {
 		vTaskDelay(ERROR_PAUSE);
 		esp_restart();
 	}
+
+	sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sock < 0) {
+		ESP_LOGE(TAG, "Unable to create socket, errno = %d", errno);
+		vTaskDelay(ERROR_PAUSE);
+		esp_restart();
+	}
+
+	sock_dest.sin_addr.s_addr = inet_addr(TARGET_HOST);
+	sock_dest.sin_family = AF_INET;
+	sock_dest.sin_port = htons(TARGET_PORT);
 
 	ESP_LOGI(TAG, "Initialized");
 
@@ -142,6 +163,33 @@ static void mpu_read_task(void *arg)
 			(int16_t)((sensor_data[10] << 8) | sensor_data[11]),
 			(int16_t)((sensor_data[12] << 8) | sensor_data[13])
 		);
+
+		if (networkReady) {
+			iret = snprintf(payload, sizeof(payload),
+				"Sensor Data: %6d %6d %6d %6d %6d %6d %6d\n",
+				(int16_t)((sensor_data[0] << 8) | sensor_data[1]),
+				(int16_t)((sensor_data[2] << 8) | sensor_data[3]),
+				(int16_t)((sensor_data[4] << 8) | sensor_data[5]),
+				(int16_t)((sensor_data[6] << 8) | sensor_data[7]),
+				(int16_t)((sensor_data[8] << 8) | sensor_data[9]),
+				(int16_t)((sensor_data[10] << 8) | sensor_data[11]),
+				(int16_t)((sensor_data[12] << 8) | sensor_data[13])
+			);
+			if (iret < 0) {
+				ESP_LOGE(TAG, "Unable to populate payload, errno = %d", errno);
+				vTaskDelay(ERROR_PAUSE);
+				continue;
+			} else {
+				payload_length = iret;
+			}
+
+			iret = sendto(sock, payload, payload_length, 0, (struct sockaddr *) &sock_dest, sizeof(sock_dest));
+			if (iret < 0) {
+				ESP_LOGE(TAG, "Unable to send network packet, errno = %d", errno);
+				vTaskDelay(ERROR_PAUSE);
+				continue;
+			}
+		}
 
 		vTaskDelay(50 / portTICK_RATE_MS);
 	}
@@ -172,8 +220,9 @@ static void wifi_init(void)
 void app_main(void)
 {
 	ESP_ERROR_CHECK(esp_event_loop_create_default());
+	ESP_ERROR_CHECK(esp_netif_init());
 
 	wifi_init();
 
-	xTaskCreate(mpu_read_task, "mpu_read_task", 1024, NULL, 10, NULL);
+	xTaskCreate(mpu_read_task, "mpu_read_task", 4096, NULL, 10, NULL);
 }
