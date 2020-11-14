@@ -4,8 +4,13 @@
 #include <freertos/task.h>
 
 #include <esp_err.h>
+#include <esp_event.h>
 #include <esp_log.h>
 #include <esp_system.h>
+#include <esp_wifi.h>
+
+#define WIFI_SSID "ssid"
+#define WIFI_PASSWORD "password"
 
 #define ERROR_PAUSE (1000 / portTICK_RATE_MS)
 
@@ -19,6 +24,27 @@
 #define MPU6050_WHOAMI_RESPONSE 0x68
 
 static const char *TAG = "mpu_osc";
+
+static volatile bool networkReady = false;
+
+static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+{
+	if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
+		esp_wifi_connect();
+		return;
+	}
+
+	if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+		networkReady = false;
+		esp_wifi_connect();
+		return;
+	}
+
+	if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+		networkReady = true;
+		return;
+	}
+}
 
 static esp_err_t mpu6050_init(i2c_port_t i2c_port, uint8_t address)
 {
@@ -106,7 +132,8 @@ static void mpu_read_task(void *arg)
 			continue;
 		}
 
-		ESP_LOGD(TAG, "sensor_data: %6d %6d %6d %6d %6d %6d %6d",
+		ESP_LOGD(TAG, "Net: %s Sensor Data: %6d %6d %6d %6d %6d %6d %6d",
+			(networkReady ? "yes" : "no"),
 			(int16_t)((sensor_data[0] << 8) | sensor_data[1]),
 			(int16_t)((sensor_data[2] << 8) | sensor_data[3]),
 			(int16_t)((sensor_data[4] << 8) | sensor_data[5]),
@@ -120,7 +147,33 @@ static void mpu_read_task(void *arg)
 	}
 }
 
+static void wifi_init(void)
+{
+	ESP_LOGI(TAG, "Initializing WiFi, SSID is %s", WIFI_SSID);
+
+	wifi_init_config_t wifi_init_config = WIFI_INIT_CONFIG_DEFAULT();
+	ESP_ERROR_CHECK(esp_wifi_init(&wifi_init_config));
+	ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, event_handler, NULL));
+	ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, event_handler, NULL));
+
+	wifi_config_t wifi_config = {
+		.sta = {
+			.ssid = WIFI_SSID,
+			.password = WIFI_PASSWORD
+		}
+	};
+
+	ESP_ERROR_CHECK(esp_wifi_set_storage(WIFI_STORAGE_RAM));
+	ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+	ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+	ESP_ERROR_CHECK(esp_wifi_start());
+}
+
 void app_main(void)
 {
+	ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+	wifi_init();
+
 	xTaskCreate(mpu_read_task, "mpu_read_task", 1024, NULL, 10, NULL);
 }
