@@ -1,5 +1,8 @@
 import math
+import socketserver
+import struct
 import sys
+import threading
 
 import pyqtgraph
 
@@ -83,27 +86,17 @@ def main():
 
 	mp = MpuPlotter(100)
 
-	def updater():
-		import time
-		sine = lambda p: lambda t: math.sin(math.tau * t / p)
+	class _DataHandler(socketserver.DatagramRequestHandler):
+		def handle(self):
+			tof = lambda i: i / 32768. if i < 0 else i / 32767.
+			sensor_data = self.rfile.read()
+			unpacked = struct.unpack('>hhhhhhh', sensor_data)
+			mp.put_data(
+				tof(unpacked[0]), tof(unpacked[1]), tof(unpacked[2]),
+				tof(unpacked[4]), tof(unpacked[5]), tof(unpacked[6])
+			)
 
-		fs = [
-			sine(2),
-			sine(3),
-			sine(5),
-			sine(2),
-			sine(3),
-			sine(5)
-		]
-
-		start = time.monotonic()
-		while True:
-			t = time.monotonic() - start
-			data = tuple(map(lambda f: f(t), fs))
-			mp.put_data(*data)
-			time.sleep(.05)
-	import threading
-	threading.Thread(target=updater, daemon=True).start()
+	threading.Thread(target=socketserver.UDPServer(('0.0.0.0', 12345), _DataHandler).serve_forever, daemon=True).start()
 
 	app.exec_()
 
