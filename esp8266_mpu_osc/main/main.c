@@ -114,8 +114,6 @@ static void mpu_read_task(void *arg)
 	esp_err_t ret;
 	int iret;
 	uint8_t sensor_data[14];
-	char payload[1024];
-	size_t payload_length;
 	int sock;
 	struct sockaddr_in sock_dest;
 
@@ -165,25 +163,7 @@ static void mpu_read_task(void *arg)
 		);
 
 		if (networkReady) {
-			iret = snprintf(payload, sizeof(payload),
-				"Sensor Data: %6d %6d %6d %6d %6d %6d %6d\n",
-				(int16_t)((sensor_data[0] << 8) | sensor_data[1]),
-				(int16_t)((sensor_data[2] << 8) | sensor_data[3]),
-				(int16_t)((sensor_data[4] << 8) | sensor_data[5]),
-				(int16_t)((sensor_data[6] << 8) | sensor_data[7]),
-				(int16_t)((sensor_data[8] << 8) | sensor_data[9]),
-				(int16_t)((sensor_data[10] << 8) | sensor_data[11]),
-				(int16_t)((sensor_data[12] << 8) | sensor_data[13])
-			);
-			if (iret < 0) {
-				ESP_LOGE(TAG, "Unable to populate payload, errno = %d", errno);
-				vTaskDelay(ERROR_PAUSE);
-				continue;
-			} else {
-				payload_length = iret;
-			}
-
-			iret = sendto(sock, payload, payload_length, 0, (struct sockaddr *) &sock_dest, sizeof(sock_dest));
+			iret = sendto(sock, sensor_data, 14, 0, (struct sockaddr *) &sock_dest, sizeof(sock_dest));
 			if (iret < 0) {
 				ESP_LOGE(TAG, "Unable to send network packet, errno = %d", errno);
 				vTaskDelay(ERROR_PAUSE);
