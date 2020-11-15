@@ -116,6 +116,7 @@ static void mpu_read_task(void *arg)
 	uint8_t sensor_data[14];
 	int sock;
 	struct sockaddr_in sock_dest;
+	TickType_t last_process_time;
 
 	ret = mpu_read_task_init();
 	if (ret != ESP_OK) {
@@ -133,6 +134,8 @@ static void mpu_read_task(void *arg)
 	sock_dest.sin_addr.s_addr = inet_addr(TARGET_HOST);
 	sock_dest.sin_family = AF_INET;
 	sock_dest.sin_port = htons(TARGET_PORT);
+
+	last_process_time = xTaskGetTickCount();
 
 	ESP_LOGI(TAG, "Initialized");
 
@@ -171,7 +174,7 @@ static void mpu_read_task(void *arg)
 			}
 		}
 
-		vTaskDelay(50 / portTICK_RATE_MS);
+		vTaskDelayUntil(&last_process_time, 50 / portTICK_RATE_MS);
 	}
 }
 
