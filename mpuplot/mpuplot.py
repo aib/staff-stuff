@@ -7,10 +7,15 @@ import threading
 import pyqtgraph
 
 class MpuPlotter:
+	class SignalContainer(pyqtgraph.Qt.QtCore.QObject):
+		data_updated = pyqtgraph.Qt.QtCore.pyqtSignal()
+
 	def __init__(self, plot_length):
 		self.plot_length = plot_length
+		self.signals = self.SignalContainer()
 
 		self.widget = pyqtgraph.GraphicsLayoutWidget(title="MPU Plotter")
+		self.signals.data_updated.connect(self._data_updated)
 
 		self.tracked = {
 			'ax':   { 'components': 1, 'title': "Accel X--", 'color': 'r', 'pos': (3, 0) },
@@ -46,7 +51,7 @@ class MpuPlotter:
 		for k in self.update_order:
 			self.widget.addItem(self.plots[k], row=self.tracked[k]['pos'][0], col=self.tracked[k]['pos'][1])
 
-		self._update_data()
+		self.signals.data_updated.emit()
 
 		self.widget.showMaximized()
 
@@ -73,9 +78,9 @@ class MpuPlotter:
 		for k, v in keyed.items():
 			self.plot_data[k] = self.plot_data[k][1:] + [v]
 
-		self._update_data()
+		self.signals.data_updated.emit()
 
-	def _update_data(self):
+	def _data_updated(self, *args, **kwargs):
 		for k in self.update_order:
 			self.curves[k].setData(self.plot_data[k])
 
